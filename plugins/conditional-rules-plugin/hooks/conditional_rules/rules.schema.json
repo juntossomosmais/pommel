@@ -1,0 +1,199 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.com/conditional-rules/v1",
+  "title": "Conditional Rules",
+  "description": "Schema for rules.json used by the conditional-rules hook system.",
+  "type": "object",
+  "required": ["rules"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": { "type": "string" },
+    "activation_criteria": {
+      "$ref": "#/$defs/activation_criteria_condition",
+      "description": "Optional condition evaluated against the current project. When present and false, the entire rules.json is skipped (marketplace sources only; ignored for project-level rules). Only any_file_* predicates are allowed — triggering_file_* predicates require an active tool invocation and are rejected at config-load time."
+    },
+    "rules": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/rule" }
+    }
+  },
+  "$defs": {
+    "rule": {
+      "type": "object",
+      "required": ["id", "when"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Unique rule identifier (used as the dedup cache key)."
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Human-only metadata; never injected into Claude's context."
+        },
+        "enabled": {
+          "type": "boolean",
+          "description": "Set to false to disable the rule without deleting it. Defaults to true."
+        },
+        "tools": {
+          "type": "array",
+          "minItems": 1,
+          "description": "Restrict to a subset of {Edit, Write, Read}. Defaults to all three.",
+          "items": { "enum": ["Edit", "Write", "Read"] }
+        },
+        "fires_on_matcher": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Claude-Code-style matcher against hook event names. Defaults to 'PreToolUse'."
+        },
+        "content": {
+          "oneOf": [
+            { "type": "string" },
+            { "type": "array", "items": { "type": "string" } }
+          ],
+          "description": "Inline rule content. String or array-of-strings (joined with newlines)."
+        },
+        "content_file": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Path to a file (relative to the plugin root) containing the rule content."
+        },
+        "when": { "$ref": "#/$defs/condition" }
+      },
+      "oneOf": [
+        { "required": ["content"] },
+        { "required": ["content_file"] }
+      ]
+    },
+    "condition": {
+      "oneOf": [
+        { "$ref": "#/$defs/predicate" },
+        { "$ref": "#/$defs/combinator" }
+      ]
+    },
+    "activation_criteria_condition": {
+      "description": "A condition valid inside activation_criteria. Only any_file_* predicates are permitted — triggering_file_* predicates require an active tool invocation and are a config error here.",
+      "oneOf": [
+        { "$ref": "#/$defs/any_file_predicate" },
+        { "$ref": "#/$defs/activation_criteria_combinator" }
+      ]
+    },
+    "any_file_predicate": {
+      "type": "object",
+      "additionalProperties": false,
+      "minProperties": 1,
+      "maxProperties": 1,
+      "properties": {
+        "any_file_exists": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Project-relative path whose existence is checked (file or directory)."
+        },
+        "any_file_content_regex": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["path", "pattern"],
+          "description": "Regex against an arbitrary file in the user's project.",
+          "properties": {
+            "path": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Project-relative path (must stay inside the project root)."
+            },
+            "pattern": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Python regex evaluated via re.search."
+            }
+          }
+        }
+      }
+    },
+    "activation_criteria_combinator": {
+      "type": "object",
+      "additionalProperties": false,
+      "minProperties": 1,
+      "maxProperties": 1,
+      "properties": {
+        "all_of": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/activation_criteria_condition" }
+        },
+        "any_of": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/activation_criteria_condition" }
+        },
+        "not": { "$ref": "#/$defs/activation_criteria_condition" }
+      }
+    },
+    "predicate": {
+      "type": "object",
+      "additionalProperties": false,
+      "minProperties": 1,
+      "maxProperties": 1,
+      "properties": {
+        "triggering_file_path_glob": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Glob against the project-relative POSIX path of the file being touched."
+        },
+        "triggering_file_path_regex": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Regex (re.search) against the project-relative path of the file being touched."
+        },
+        "triggering_file_content_regex": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Regex (re.search) against the content of the file being touched (up to 1 MiB)."
+        },
+        "any_file_exists": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Project-relative path whose existence is checked (file or directory)."
+        },
+        "any_file_content_regex": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["path", "pattern"],
+          "description": "Regex against an arbitrary file in the user's project.",
+          "properties": {
+            "path": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Project-relative path (must stay inside the project root)."
+            },
+            "pattern": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Python regex evaluated via re.search."
+            }
+          }
+        }
+      }
+    },
+    "combinator": {
+      "type": "object",
+      "additionalProperties": false,
+      "minProperties": 1,
+      "maxProperties": 1,
+      "properties": {
+        "all_of": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/condition" }
+        },
+        "any_of": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/condition" }
+        },
+        "not": { "$ref": "#/$defs/condition" }
+      }
+    }
+  }
+}

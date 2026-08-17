@@ -1,0 +1,31 @@
+name: PR checks
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+# No secrets are used anywhere in this workflow, so every step also runs on
+# PRs opened from forks.
+jobs:
+  lint-and-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Run lint and formatter checks
+        run: |
+          docker compose up --build --exit-code-from lint-formatter lint-formatter
+      - name: Run the engine test suite
+        run: |
+          docker compose up --build --exit-code-from integration-tests integration-tests
+      - name: End-to-end smoke test
+        run: |
+          docker compose run --remove-orphans --rm integration-tests ./scripts/smoke-test.sh
+      - name: Validate plugin manifests
+        run: |
+          npm install -g @anthropic-ai/claude-code
+          claude plugin validate .
+          for plugin in plugins/*/; do claude plugin validate "$plugin"; done

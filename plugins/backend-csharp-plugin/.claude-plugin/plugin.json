@@ -1,0 +1,12 @@
+{
+  "name": "backend-csharp-plugin",
+  "description": "Conditional rules for backend development in C# / .NET.",
+  "version": "0.1.0",
+  "author": { "name": "Juntos Somos Mais", "url": "https://github.com/juntossomosmais" },
+  "repository": "https://github.com/juntossomosmais/pommel",
+  "license": "MIT",
+  "keywords": ["csharp", "dotnet", "aspnetcore", "cap", "hangfire", "conditional-rules"],
+  "dependencies": [
+    { "name": "conditional-rules-plugin", "version": ">=0.1.0" }
+  ]
+}

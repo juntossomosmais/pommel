@@ -1,0 +1,12 @@
+# Lint/format configuration for this repository.
+
+line-length = 100
+
+# The rule packs' *.md bodies are demonstration snapshots — keep ruff away
+# from fenced code blocks inside markdown.
+extend-exclude = ["*.md"]
+
+[lint]
+ignore = [
+    "BLE001", # blind except — deliberate: the hook engine must never crash a tool call
+]

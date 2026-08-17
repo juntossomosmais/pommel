@@ -1,0 +1,276 @@
+{
+  "$schema": "../../conditional-rules-plugin/hooks/conditional_rules/rules.schema.json",
+  "activation_criteria": {
+    "any_of": [
+      { "any_file_exists": "*.sln" },
+      { "any_file_exists": "**/*.csproj" }
+    ]
+  },
+  "rules": [
+    {
+      "id": "main-rules",
+      "description": "Global backend-csharp SDLC rules: build/test commands, coding conventions, data access, CAP messaging.",
+      "fires_on_matcher": "*",
+      "when": { "any_file_exists": "." },
+      "content_file": "main-rules.md"
+    },
+    {
+      "id": "api-patterns",
+      "description": "ASP.NET Core controller conventions for files under src/Controllers (NDjango.RestFramework BaseController + Serializer-driven validation). Loads only when the project matches the template structure (src/Models.cs and src/Database.cs both present).",
+      "when": {
+        "all_of": [
+          { "triggering_file_path_glob": "src/Controllers/**/*.cs" },
+          { "any_file_exists": "src/Models.cs" },
+          { "any_file_exists": "src/Database.cs" }
+        ]
+      },
+      "content_file": "api-patterns.md"
+    },
+    {
+      "id": "hangfire-jobs",
+      "description": "Hangfire background-job conventions for files under src/Jobs or any file using Hangfire.",
+      "when": {
+        "any_of": [
+          { "triggering_file_path_glob": "src/Jobs/**/*.cs" },
+          { "triggering_file_content_regex": "using Hangfire;" }
+        ]
+      },
+      "content_file": "hangfire-jobs.md"
+    },
+    {
+      "id": "messaging-cap-consumers",
+      "description": "CAP consumer conventions for files under src/Consumers or any file using DotNetCore.CAP.",
+      "when": {
+        "any_of": [
+          { "triggering_file_path_glob": "src/Consumers/**/*.cs" },
+          { "triggering_file_content_regex": "using DotNetCore\\.CAP;" }
+        ]
+      },
+      "content_file": "messaging-cap-consumers.md"
+    },
+    {
+      "id": "program-and-commands",
+      "description": "System.CommandLine entry-point and Startup conventions.",
+      "when": {
+        "any_of": [
+          { "triggering_file_path_glob": "src/Program.cs" },
+          { "triggering_file_path_glob": "src/Commands/**/*.cs" }
+        ]
+      },
+      "content_file": "program-and-commands.md"
+    },
+    {
+      "id": "serializers",
+      "description": "NDjango.RestFramework serializer placement, versioning, and ownership rules.",
+      "when": {
+        "any_of": [
+          { "triggering_file_path_glob": "src/Serializers/**/*.cs" },
+          { "triggering_file_content_regex": "NDjango\\.RestFramework\\.Serializer" }
+        ]
+      },
+      "content_file": "serializers.md"
+    },
+    {
+      "id": "services-and-sdks",
+      "description": "Service and SDK layer conventions (typed HttpClient, resilience, DTO layout).",
+      "when": {
+        "any_of": [
+          { "triggering_file_path_glob": "src/Services/**/*.cs" },
+          { "triggering_file_path_glob": "src/Sdks/**/*.cs" }
+        ]
+      },
+      "content_file": "services-and-sdks.md"
+    },
+    {
+      "id": "testing",
+      "description": "xUnit / Moq testing conventions for test projects and test-suffix files.",
+      "when": {
+        "any_of": [
+          { "triggering_file_path_glob": "*.Test/**/*.cs" },
+          { "triggering_file_path_glob": "*.Tests/**/*.cs" },
+          { "triggering_file_path_glob": "**/*Tests.cs" },
+          { "triggering_file_path_glob": "**/Tests*.cs" },
+          { "triggering_file_path_glob": "**/Unit/**/*.cs" },
+          { "triggering_file_path_glob": "tests/**/*.cs" }
+        ]
+      },
+      "content_file": "testing.md"
+    },
+    {
+      "id": "csharp-invalid-publish-without-transaction",
+      "description": "PostToolUse: the file just written calls PublishAsync but contains no BeginTransactionAsync anywhere. Same-file heuristic for the 'never publish outside a transaction' rule.",
+      "fires_on_matcher": "PostToolUse",
+      "tools": [
+        "Edit",
+        "Write"
+      ],
+      "when": {
+        "all_of": [
+          { "triggering_file_path_glob": "src/**/*.cs" },
+          {
+            "not": { "triggering_file_path_glob": "src/Migrations/**" }
+          },
+          { "triggering_file_content_regex": "\\.PublishAsync\\s*[(<]" },
+          {
+            "not": { "triggering_file_content_regex": "\\bBeginTransactionAsync\\s*\\(" }
+          }
+        ]
+      },
+      "content_file": "invalid-publish-without-transaction.md"
+    },
+    {
+      "id": "csharp-invalid-publish-in-wrong-layer",
+      "description": "PostToolUse: a PublishAsync call was written into a Consumer, Controller, or Job. Publishing belongs to the serializer layer.",
+      "fires_on_matcher": "PostToolUse",
+      "tools": [
+        "Edit",
+        "Write"
+      ],
+      "when": {
+        "all_of": [
+          {
+            "any_of": [
+              { "triggering_file_path_glob": "src/Consumers/**/*.cs" },
+              { "triggering_file_path_glob": "src/Controllers/**/*.cs" },
+              { "triggering_file_path_glob": "src/Jobs/**/*.cs" }
+            ]
+          },
+          { "triggering_file_content_regex": "\\.PublishAsync\\s*[(<]" }
+        ]
+      },
+      "content_file": "invalid-publish-in-wrong-layer.md"
+    },
+    {
+      "id": "csharp-invalid-api-versioning",
+      "description": "PostToolUse: a controller file was written with an unversioned route attribute or an unversioned namespace. API versioning is mandatory in both places.",
+      "fires_on_matcher": "PostToolUse",
+      "tools": [
+        "Edit",
+        "Write"
+      ],
+      "when": {
+        "all_of": [
+          { "triggering_file_path_glob": "src/Controllers/**/*.cs" },
+          {
+            "any_of": [
+              { "triggering_file_content_regex": "\\[Route\\(\\s*\"(?!v\\d+/)" },
+              { "triggering_file_content_regex": "(?m)^\\s*namespace\\s+[A-Za-z0-9_.]*Controllers\\s*[;{]" }
+            ]
+          }
+        ]
+      },
+      "content_file": "invalid-api-versioning.md"
+    },
+    {
+      "id": "csharp-invalid-controller-dbcontext-write",
+      "description": "PostToolUse: a controller file now contains a DbContext write (Add/Update/Remove/SaveChanges/ExecuteUpdate/ExecuteDelete). Controllers are wiring only; writes belong to the serializer.",
+      "fires_on_matcher": "PostToolUse",
+      "tools": [
+        "Edit",
+        "Write"
+      ],
+      "when": {
+        "all_of": [
+          { "triggering_file_path_glob": "src/Controllers/**/*.cs" },
+          {
+            "any_of": [
+              {
+                "triggering_file_content_regex": "(?<![A-Za-z0-9_.])(?:_context|_dbContext|_appDbContext|_sqlContext|context|dbContext|SqlContext)\\s*\\.\\s*[A-Z]\\w*\\s*\\.\\s*(?:Add|Update|Remove)(?:Range)?(?:Async)?\\s*\\("
+              },
+              {
+                "triggering_file_content_regex": "\\.\\s*(?:SaveChangesAsync|ExecuteUpdateAsync|ExecuteDeleteAsync)\\s*\\("
+              }
+            ]
+          }
+        ]
+      },
+      "content_file": "invalid-controller-dbcontext-write.md"
+    },
+    {
+      "id": "csharp-invalid-structured-logging-template",
+      "description": "PostToolUse: a log call using a {Placeholder} message template was just written. Fully formatted strings are mandatory.",
+      "fires_on_matcher": "PostToolUse",
+      "tools": [
+        "Edit",
+        "Write"
+      ],
+      "when": {
+        "all_of": [
+          {
+            "any_of": [
+              { "triggering_file_path_glob": "src/**/*.cs" },
+              { "triggering_file_path_glob": "tests/**/*.cs" }
+            ]
+          },
+          {
+            "triggering_file_content_regex": "\\.Log(?:Information|Warning|Error|Debug|Critical|Trace)\\s*\\(\\s*(?:[A-Za-z_]\\w*\\s*,\\s*)?\"[^\"]*\\{\\w"
+          }
+        ]
+      },
+      "content_file": "invalid-structured-logging-template.md"
+    },
+    {
+      "id": "csharp-invalid-capsubscribe-raw-topic",
+      "description": "PostToolUse: a [CapSubscribe] attribute was written with a raw string topic or group instead of the Topics.*/Groups.* constants.",
+      "fires_on_matcher": "PostToolUse",
+      "tools": [
+        "Edit",
+        "Write"
+      ],
+      "when": {
+        "all_of": [
+          { "triggering_file_path_glob": "src/Consumers/**/*.cs" },
+          {
+            "any_of": [
+              { "triggering_file_content_regex": "\\[CapSubscribe\\s*\\(\\s*\"" },
+              { "triggering_file_content_regex": "\\[CapSubscribe\\s*\\([^)]*Group\\s*=\\s*\"" }
+            ]
+          }
+        ]
+      },
+      "content_file": "invalid-capsubscribe-raw-topic.md"
+    },
+    {
+      "id": "csharp-invalid-repository-layer",
+      "description": "PostToolUse: a Repository class/interface was declared in a project that uses NDjango.RestFramework serializers, where the repository layer is banned.",
+      "fires_on_matcher": "PostToolUse",
+      "tools": [
+        "Edit",
+        "Write"
+      ],
+      "when": {
+        "all_of": [
+          { "triggering_file_path_glob": "src/**/*.cs" },
+          {
+            "triggering_file_content_regex": "(?m)^\\s*(?:public|internal|private|protected)?\\s*(?:sealed\\s+|abstract\\s+|partial\\s+|static\\s+)*(?:class|interface)\\s+I?[A-Za-z0-9_]*Repository\\b"
+          },
+          {
+            "any_file_content_regex": { "path": "src/packages.lock.json", "pattern": "\"NDjango\\.RestFramework\"" }
+          }
+        ]
+      },
+      "content_file": "invalid-repository-layer.md"
+    },
+    {
+      "id": "csharp-invalid-fluentassertions-in-tests",
+      "description": "PostToolUse: a FluentAssertions import or .Should() chain was written into a test file. xUnit native asserts are mandatory.",
+      "fires_on_matcher": "PostToolUse",
+      "tools": [
+        "Edit",
+        "Write"
+      ],
+      "when": {
+        "all_of": [
+          {
+            "any_of": [
+              { "triggering_file_path_glob": "tests/**/*.cs" },
+              { "triggering_file_path_glob": "**/*Tests.cs" }
+            ]
+          },
+          { "triggering_file_content_regex": "(?m)^\\s*using\\s+FluentAssertions\\s*;|\\.Should\\(\\)\\s*\\." }
+        ]
+      },
+      "content_file": "invalid-fluentassertions-in-tests.md"
+    }
+  ]
+}

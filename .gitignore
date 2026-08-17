@@ -1,0 +1,15 @@
+# Python
+__pycache__/
+*.py[cod]
+.coverage
+.ruff_cache/
+
+# IDEs
+.idea/
+.vscode/
+
+# Conditional rules engine — per-session dedup cache (created when running the hook or tests locally)
+.state/
+
+# macOS
+.DS_Store

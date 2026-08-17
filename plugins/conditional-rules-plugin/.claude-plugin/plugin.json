@@ -1,0 +1,10 @@
+{
+  "name": "conditional-rules-plugin",
+  "description": "A plugin-scoped replacement for Claude Code's native nested-`CLAUDE.md` rules.",
+  "version": "0.1.0",
+  "author": { "name": "Juntos Somos Mais", "url": "https://github.com/juntossomosmais" },
+  "homepage": "https://github.com/juntossomosmais/pommel/blob/main/plugins/conditional-rules-plugin/hooks/conditional_rules/CONDITIONAL_RULES.md",
+  "repository": "https://github.com/juntossomosmais/pommel",
+  "license": "MIT",
+  "keywords": ["rules", "hooks", "context-engineering", "conditional-loading"]
+}

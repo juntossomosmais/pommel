@@ -1,0 +1,24 @@
+{
+  "name": "pommel",
+  "owner": {
+    "name": "Juntos Somos Mais",
+    "url": "https://github.com/juntossomosmais"
+  },
+  "description": "Context-aware development rules for Claude Code — a conditional rules engine plus reference plugins that demonstrate it.",
+  "plugins": [
+    {
+      "name": "conditional-rules-plugin",
+      "source": "./plugins/conditional-rules-plugin",
+      "description": "A plugin-scoped replacement for Claude Code's native nested-CLAUDE.md rules: conditional loading, content-based triggers, and event routing via hooks.",
+      "category": "engineering",
+      "keywords": ["rules", "hooks", "context-engineering", "conditional-loading"]
+    },
+    {
+      "name": "backend-csharp-plugin",
+      "source": "./plugins/backend-csharp-plugin",
+      "description": "Conditional rules for backend development in C# / .NET (ASP.NET Core, CAP, Hangfire, xUnit).",
+      "category": "engineering",
+      "keywords": ["csharp", "dotnet", "aspnetcore", "conditional-rules"]
+    }
+  ]
+}
