@@ -3,6 +3,8 @@
 **Pommel · plugin research · 2026-08-17**
 
 > **Snapshot of 2026-08-17.** Harness capabilities, bugs, and docs referenced here change frequently — re-verify against primary sources before starting a port.
+>
+> **Revision 2026-08-18.** Antigravity C3 upgraded 🟡 → ✅: the current hooks documentation shows `PostToolUse` input includes `toolCall` (name and args), matching `PreToolUse`. Footnote 8 previously claimed the post side carried no tool or file info.
 
 Can the `conditional-rules` engine — condition-gated context injection at tool and session events — be rebuilt on other AI coding harnesses? Seven candidate harnesses — plus Claude Code as the shipping reference — were assessed against fourteen capability rows (twelve capabilities, with tool-event hooks split across pre/post/session). Every assessment was produced by a research agent and then adversarially re-verified by an independent fact-checking agent against primary documentation.
 
@@ -60,7 +62,7 @@ Ratings verified against primary docs on 2026-08-17. C4 is the capability the wh
 | C2a Pre-tool event | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | C2b Post-tool event | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | C2c Session-start event | ✅ | ✅ | ✅ | ✅ | 🟡 ⁴ | 🟡 ⁵ | 🟡 ⁶ | ✅ |
-| C3 Hook sees tool name + file path | ✅ | 🟡 ⁷ | ✅ | ✅ | ✅ | 🟡 ⁸ | ✅ | 🟡 |
+| C3 Hook sees tool name + file path | ✅ | 🟡 ⁷ | ✅ | ✅ | ✅ | ✅ ⁸ | ✅ | 🟡 |
 | **C4 Hook output injects model context** | **✅** | **✅** | **✅ ⁹** | **✅** | **✅ ¹⁰** | **✅ ¹¹** | **🟡 ¹²** | **❌** |
 | C5 Block tool call with reason | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | C6 User-facing message channel | ✅ | ✅ | 🟡 | 🟡 | ✅ | ❌ | ✅ | ❔ |
@@ -81,7 +83,7 @@ Ratings verified against primary docs on 2026-08-17. C4 is the capability the wh
 5. No SessionStart event; closest analog is `PreInvocation` with `invocationNum == 0`.
 6. `sessionStart` fires on new conversation only; cloud agents are read-only for hooks.
 7. File edits run through `apply_patch`, whose path is embedded in an unstructured `tool_input.command` string — needs a small parser instead of a field read.
-8. `PreToolUse` receives `toolCall` (name + args); `PostToolUse` input is only `stepIdx` + optional error — no file path on the post side.
+8. Both `PreToolUse` and `PostToolUse` receive `toolCall` (name + args) on stdin; the post side adds `stepIdx` and an optional `error`. Corrected 2026-08-18 against the current hooks docs — the original snapshot claimed the post side carried only `stepIdx` + error.
 9. Universal contract: any hook that exits 0 with non-empty stdout has that text added to model context.
 10. No single field; verified channels are `tool.execute.after` output mutation, `experimental.chat.system.transform`, `experimental.chat.messages.transform`, and compaction context.
 11. Injection (`injectSteps`) exists only at `PreInvocation`/`PostInvocation` — decoupled from tool events, which cannot inject.
