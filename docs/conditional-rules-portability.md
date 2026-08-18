@@ -4,7 +4,7 @@
 
 > **Snapshot of 2026-08-17.** Harness capabilities, bugs, and docs referenced here change frequently — re-verify against primary sources before starting a port.
 >
-> **Revision 2026-08-18.** Antigravity C3 upgraded 🟡 → ✅: the current hooks documentation shows `PostToolUse` input includes `toolCall` (name and args), matching `PreToolUse`. Footnote 8 previously claimed the post side carried no tool or file info.
+> Movement since the snapshot — corrections, filed issues, community reports — is tracked in the [Status timeline](#status-timeline). Matrix verdicts change only on a `docs`-class entry there.
 
 Can the `conditional-rules` engine — condition-gated context injection at tool and session events — be rebuilt on other AI coding harnesses? Seven candidate harnesses — plus Claude Code as the shipping reference — were assessed against fourteen capability rows (twelve capabilities, with tool-event hooks split across pre/post/session). Every assessment was produced by a research agent and then adversarially re-verified by an independent fact-checking agent against primary documentation.
 
@@ -49,6 +49,31 @@ The capabilities that support this, used as matrix rows:
 | **Google Antigravity** | 🟡 Partial — two-hook bridge | Tool hooks see the file but can't inject; injection lives only at `PreInvocation`, which sees no file. A port bridges the two through a scratch file keyed by conversation id. |
 | **Cursor** | 🟡 Partial — injection broken upstream | `additional_context` is documented for `postToolUse`/`sessionStart` but a Cursor engineer confirmed it doesn't reach the model (unfixed as of 2026-05). Native `.mdc` rules are the best glob fallback anywhere. |
 | **xAI Grok Build** | ❌ Weakest — no injection channel | Rich hook plumbing, but no event lets hook output reach model context — stdout on passive events is explicitly ignored. Fallbacks: deny-with-reason, or Skills' file-touch `paths` globs. |
+
+---
+
+## Status timeline
+
+The living layer of this report: what has moved since the snapshot, per harness, newest first. Every entry carries an evidence class:
+
+- **docs** — verified against primary documentation; may change a matrix verdict.
+- **reported** — credible community or research statement not yet reflected in official docs; never changes a verdict on its own. It graduates to **docs** when a citable primary source exists.
+- **filed** — an issue we opened, with its current state.
+
+### Antigravity
+
+- 2026-08-18 · **reported** — hooks fire inside subagents, and every agent (parent and subagents alike) gets its own `conversationId`, per James O'Reilly (Google DevRel building on `invoke_subagent`/`manage_subagents`): [source](https://x.com/JamesOR/status/2089773238813372786), recorded on [#809](https://github.com/google-antigravity/antigravity-cli/issues/809#issuecomment-5332262566). The hooks docs do not state this yet, so the C9 verdict stays ❌ until a citable source exists (his article with working code is in progress). If confirmed, per-agent dedup keys on `conversationId` and the only remaining blocker is #808.
+- 2026-08-18 · **docs** — C3 upgraded 🟡 → ✅: the current hooks documentation shows `PostToolUse` input includes `toolCall` (name and args), matching `PreToolUse`. Footnote 8 previously claimed the post side carried no tool or file info.
+- 2026-08-17 · **filed** — [#808](https://github.com/google-antigravity/antigravity-cli/issues/808) (accept `injectSteps` on `PreToolUse`/`PostToolUse` responses — the remaining hard blocker) and [#809](https://github.com/google-antigravity/antigravity-cli/issues/809) (a `SessionStart` event, plus documentation and an identity field for subagent hook behavior). Both open.
+
+### Pending re-verification (reported 2026-08-17, verdicts unchanged)
+
+Research agents found primary-source evidence that these cells drifted after the snapshot. Each needs a fresh docs-class verification before its verdict is edited.
+
+- **Codex** — hooks are GA and default-enabled since April 2026 ([openai/codex#19012](https://github.com/openai/codex/pull/19012)); footnote 1's opt-in flag claim is outdated.
+- **Grok Build** — the in-repo user guide documents `additionalContext` working on `Stop`/`SubagentStop` hooks, so C4 ❌ overstates the gap (the ask narrows to extending the existing channel to `PreToolUse`/`PostToolUse`/`SessionStart`); and Skills' `paths` config adds skill-discovery directories rather than the file-touch trigger footnote 20 describes.
+- **OpenCode** — an `agent` field was added to hook input ([anomalyco/opencode#13524](https://github.com/anomalyco/opencode/issues/13524), closed), and the `batch` tool was removed entirely; footnote 15 is outdated on both points.
+- **Cursor** — `additional_context` on `preToolUse` is officially supported per a Cursor engineer ([forum](https://forum.cursor.com/t/166969)), with only a docs omission; the delivery bug for `sessionStart`/`postToolUse` remains live ([forum](https://forum.cursor.com/t/168441)). Footnote 12's "not preToolUse" claim is outdated; the blocked-upstream verdict stands.
 
 ---
 
