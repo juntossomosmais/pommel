@@ -13,3 +13,6 @@ __pycache__/
 
 # macOS
 .DS_Store
+
+# Local scratch (tweet drafts, notes) — never committed
+/tmp/
